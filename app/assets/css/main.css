@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Epilogue:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+    /* =========================================
+       COLORS (Pastel Joy & Coastal Warmth)
+       ========================================= */
+    /* Warm beige surfaces for a softer, sandy vibe */
+    --color-surface: #f2ebe1;
+    --color-surface-dim: #e6dac8;
+    --color-surface-bright: #f9f5f0;
+    --color-surface-container-lowest: #ffffff;
+    --color-surface-container-low: #f5f0e8;
+    --color-surface-container: #eee5d8;
+    --color-surface-container-high: #e6dbcc;
+    --color-surface-container-highest: #dfd1be;
+    --color-on-surface: #231f1a;
+    --color-on-surface-variant: #5a544c;
+
+    --color-outline: #7c766e;
+    --color-outline-variant: #cdc5bc;
+
+    /* Primary: Turquoise / Light Aqua */
+    --color-primary: #40e0d0;
+    --color-on-primary: #ffffff;
+    --color-primary-container: #b5f5ee;
+    --color-on-primary-container: #005a53;
+
+    /* Secondary: Light Violet / Pastel Lilac */
+    --color-secondary: #da57f5;
+    --color-on-secondary: #ffffff;
+    --color-secondary-container: #f5d0fd;
+    --color-on-secondary-container: #6a1b7e;
+
+    /* Tertiary: Pastel Mustard / Golden Sand */
+    --color-tertiary: #e39e1c;
+    --color-on-tertiary: #ffffff;
+    --color-tertiary-container: #ffeccf;
+    --color-on-tertiary-container: #7a5200;
+
+    /* Quaternary: Apple Green (Fresh & Nature Vibe) */
+    --color-quaternary: #a2d149;
+    --color-on-quaternary: #ffffff;
+    --color-quaternary-container: #e2f7b8;
+    --color-on-quaternary-container: #2b4a00;
+
+    /* Error States */
+    --color-error: #ff8c8c;
+    --color-on-error: #ffffff;
+    --color-error-container: #ffe5e5;
+    --color-on-error-container: #a30000;
+
+    /* Backgrounds */
+    --color-background: #f2ebe1;
+    --color-on-background: #231f1a;
+
+    /* =========================================
+       TYPOGRAPHY
+       ========================================= */
+    --font-headline: "Epilogue", sans-serif;
+    --font-body: "Plus Jakarta Sans", sans-serif;
+
+    /* =========================================
+       SHAPES (Pill-shaped & Organic)
+       ========================================= */
+    --radius-sm: 0.5rem;
+    --radius-md: 1.5rem;
+    --radius-lg: 2rem;
+    --radius-xl: 3rem;
+    --radius-full: 9999px;
+
+    /* =========================================
+       SPACING & LAYOUT
+       ========================================= */
+    --spacing-unit: 8px;
+    --spacing-gutter: 24px;
+    --spacing-margin-mobile: 20px;
+    --spacing-margin-desktop: 64px;
+    --spacing-section-gap: 80px;
+
+    /* =========================================
+       CUSTOM SURF SHADOWS
+       ========================================= */
+    --shadow-surf: 0 15px 35px -5px rgba(218, 87, 245, 0.06), 0 5px 15px -3px rgba(0, 0, 0, 0.02);
+}
+
+/* =========================================
+   BASE STYLES
+   ========================================= */
+@layer base {
+    body {
+        background-color: var(--color-background);
+        color: var(--color-on-background);
+        font-family: var(--font-body);
+        -webkit-font-smoothing: antialiased;
+        overscroll-behavior-y: none;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-headline);
+    }
+}
