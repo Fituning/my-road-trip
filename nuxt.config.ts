@@ -20,14 +20,13 @@ export default defineNuxtConfig({
     }
   },
 
-  // Declarations for environment variables
   runtimeConfig: {
-    // Private keys are only available on the server side
-    pocketbaseInternalUrl: process.env.POCKETBASE_INTERNAL_URL || 'http://pocketbase:8090',
-
-    // Public keys are exposed to both server and client side
+    // Privé (Serveur)
+      pocketbaseInternalUrl: process.env.POCKETBASE_INTERNAL_URL,
+      openweatherApiKey: process.env.NUXT_OPENWEATHER_API_KEY,
     public: {
-      pocketbaseUrl: process.env.NUXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8091',
+      // Public (Client)
+      pocketbaseUrl: process.env.NUXT_PUBLIC_POCKETBASE_URL,
     }
   }
 });

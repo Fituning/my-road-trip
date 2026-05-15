@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # DATABASE SERVICE: PocketBase
+  # ==========================================
+  pocketbase:
+    image: ghcr.io/muchobien/pocketbase:latest
+    container_name: roadtrip-pocketbase
+    restart: unless-stopped
+    ports:
+      - "8091:8090"
+    volumes:
+      # Data persistence for SQLite DB and uploaded files (photos)
+      - ./pb_data:/pb_data
+      - ./pb_public:/pb_public
+    networks:
+      - roadtrip-net
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8090/api/health" ]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  # ==========================================
+  # FRONTEND SERVICE: Nuxt 3 App
+  # ==========================================
+  nuxt-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: roadtrip-nuxt
+    restart: unless-stopped
+    volumes:
+      # Map local source code to container for Hot Module Replacement (HMR)
+      - .:/app
+      # Anonymous volumes to prevent local conflicts with container structure
+      - /app/node_modules
+      - /app/.nuxt
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      # Vite polling specific for Docker volumes
+      - CHOKIDAR_USEPOLLING=true
+      # API URLs for client and server side rendering
+      - NUXT_PUBLIC_POCKETBASE_URL=http://127.0.0.1:8091
+      - POCKETBASE_INTERNAL_URL=http://pocketbase:8090
+    # Auto-install packages on startup before launching Nuxt dev server
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "3001:3000"     # Main Nuxt server port (Host:Container)
+      - "24679:24678"   # Vite HMR WebSocket port to avoid conflict
+    networks:
+      - roadtrip-net
+    depends_on:
+      pocketbase:
+        condition: service_healthy
+
+networks:
+  roadtrip-net:
+    driver: bridge

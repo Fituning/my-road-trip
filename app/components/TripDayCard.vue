@@ -14,13 +14,17 @@
 
     <div class="px-6 pb-6 flex-1 flex flex-col relative z-10 -mt-6">
 
-      <div class="mb-4">
-        <div class="inline-block px-3 py-1 bg-surface-container text-on-surface-variant rounded-full text-xs font-bold tracking-wide mb-2 uppercase border border-outline-variant/20 shadow-sm backdrop-blur-md">
-          Jour {{ day.day_number }} • {{ day.date }}
+      <div class="mb-4 flex justify-between items-start gap-2">
+        <div>
+          <div class="inline-block px-3 py-1 bg-surface-container text-on-surface-variant rounded-full text-xs font-bold tracking-wide mb-2 uppercase border border-outline-variant/20 shadow-sm backdrop-blur-md">
+            Jour {{ day.day_number }} • {{ day.date }}
+          </div>
+          <h2 class="font-headline text-3xl font-extrabold text-on-surface leading-tight">
+            {{ day.arrival_city }}
+          </h2>
         </div>
-        <h2 class="font-headline text-3xl font-extrabold text-on-surface leading-tight">
-          {{ day.arrival_city }}
-        </h2>
+
+        <WeatherWidget :city="day.arrival_city" class="scale-90 origin-top-right shrink-0" />
       </div>
 
       <div class="mb-4">
@@ -91,11 +95,19 @@
 
         <div>
           <label class="text-xs font-bold text-on-surface-variant">Statut Réservation</label>
-          <select v-model="editForm.booking_status" class="w-full mt-1 p-3 bg-surface-container-low rounded-xl text-sm border border-surface-dim/20 focus:border-primary outline-none appearance-none">
-            <option value="pending">À réserver ⏳</option>
-            <option value="booked">Réservé ✅</option>
-            <option value="not_needed">Sans Résa 🏕️</option>
-          </select>
+          <div class="relative w-full mt-1">
+            <select v-model="editForm.booking_status" class="w-full p-3 pr-10 bg-surface-container-low rounded-xl text-sm border border-surface-dim/20 focus:border-primary outline-none appearance-none">
+              <option value="" disabled>Choisis un statut...</option>
+              <option value="pending">À réserver ⏳</option>
+              <option value="booked">Réservé ✅</option>
+              <option value="not_needed">Sans Résa 🏕️</option>
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-on-surface-variant">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
         </div>
 
         <div>
@@ -119,8 +131,11 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import WeatherWidget from "./WeatherWidget.vue";
 
-// Define the shape of our PocketBase data
+/**
+ * Interface representing the data structure of a trip day from PocketBase.
+ */
 interface TripDay {
   id: string;
   day_number: number;
@@ -129,7 +144,7 @@ interface TripDay {
   travel_time: string;
   activities: string[] | string | unknown;
   personal_notes: string;
-  booking_status: 'booked' | 'pending' | 'not_needed';
+  booking_status: 'booked' | 'pending' | 'not_needed' | '';
   parking_name: string;
   parking_link: string;
   image_url: string;
@@ -139,30 +154,30 @@ interface TripDay {
 const props = defineProps<{ day: TripDay }>();
 const emit = defineEmits(['refresh']);
 
-// Global tools
+// Access Nuxt app context to retrieve the PocketBase instance
 const { $pb } = useNuxtApp();
 
-// State for In-Place Note Editing
+// State for handling inline quick notes updates
 const localNote = ref(props.day.personal_notes || '');
 const isUpdatingNote = ref(false);
 
-// State for Full Edit Drawer
+// State for handling the full edit drawer form
 const isDrawerOpen = ref(false);
 const isUpdatingFull = ref(false);
 const editForm = ref({ ...props.day });
 
 /**
- * Triggered on textarea @blur. Saves the note to PocketBase.
+ * Persists the inline note to the database when the user clicks outside the textarea.
  */
 const saveNote = async () => {
-  if (localNote.value === props.day.personal_notes) return; // No changes
+  if (localNote.value === props.day.personal_notes) return; // Prevent unnecessary API calls
 
   isUpdatingNote.value = true;
   try {
     await $pb.collection('trips_days').update(props.day.id, {
       personal_notes: localNote.value
     });
-    emit('refresh'); // Tell parent to reload data silently
+    emit('refresh'); // Silently instruct parent to pull fresh data
   } catch (err) {
     console.error("Error saving note:", err);
   } finally {
@@ -171,26 +186,31 @@ const saveNote = async () => {
 };
 
 /**
- * Drawer Handlers
+ * Opens the edit drawer and ensures the form is populated with the latest day data.
  */
 const openDrawer = () => {
-  editForm.value = { ...props.day }; // Reset form to current data
+  // Ensure we have a valid default for the select input if it's empty
+  const currentStatus = props.day.booking_status || '';
+  editForm.value = { ...props.day, booking_status: currentStatus };
   isDrawerOpen.value = true;
 };
 
+/**
+ * Closes the edit drawer.
+ */
 const closeDrawer = () => {
   isDrawerOpen.value = false;
 };
 
 /**
- * Saves all edits from the drawer to PocketBase.
+ * Saves all modified fields from the drawer form to the database.
  */
 const saveFullEdit = async () => {
   isUpdatingFull.value = true;
   try {
     await $pb.collection('trips_days').update(props.day.id, editForm.value);
     closeDrawer();
-    emit('refresh'); // Tell parent to reload data
+    emit('refresh'); // Instruct parent to reload data
   } catch (err) {
     console.error("Error saving full edit:", err);
   } finally {
@@ -199,7 +219,9 @@ const saveFullEdit = async () => {
 };
 
 /**
- * Formatting Helpers (Moved from parent)
+ * Parses raw activity data into an iterable string array.
+ * @param activitiesData Raw data from PocketBase (can be stringified JSON, array, or string)
+ * @returns Array of activity strings
  */
 const parseActivities = (activitiesData: unknown): string[] => {
   if (Array.isArray(activitiesData)) return activitiesData as string[];
@@ -210,6 +232,11 @@ const parseActivities = (activitiesData: unknown): string[] => {
   return [];
 };
 
+/**
+ * Determines the appropriate CSS classes for the booking status badge.
+ * @param status The current booking status
+ * @returns Tailwind CSS class string
+ */
 const getBadgeClass = (status: TripDay['booking_status']): string => {
   const classMap: Record<string, string> = {
     booked: 'bg-quaternary-container text-on-quaternary-container',
@@ -219,22 +246,28 @@ const getBadgeClass = (status: TripDay['booking_status']): string => {
   return classMap[status] || 'bg-surface-variant text-on-surface-variant';
 };
 
+/**
+ * Maps the internal booking status enum to a user-friendly display string.
+ * @param status The current booking status
+ * @returns Display text with emoji
+ */
 const getBadgeText = (status: TripDay['booking_status']): string => {
   const textMap: Record<string, string> = {
     booked: 'Réservé ✅',
     pending: 'À réserver ⏳',
     not_needed: 'Sans Résa 🏕️'
   };
-  return textMap[status] || status;
+  return textMap[status] || status || 'Non défini';
 };
 </script>
 
 <style scoped>
+/* Utility classes to hide standard scrollbars while retaining scroll functionality */
 .hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;    /* Firefox */
 }
 .hide-scrollbar::-webkit-scrollbar {
-  display: none;
+  display: none;            /* Chrome, Safari, and Opera */
 }
 </style>
