@@ -13,27 +13,24 @@ export default defineEventHandler(async (event) => {
     const lon = query.lon;
     const config = useRuntimeConfig(event);
 
-    // Configuration de base pour OpenWeather
-    let params: any = {
-        units: 'metric',
-        lang: 'fr',
-        appid: config.openweatherApiKey
-    };
+    let params: any = { units: 'metric', lang: 'fr', appid: config.openweatherApiKey };
 
-    // Si on a les coordonnées GPS (Page d'accueil)
-    if (lat && lon) {
-        params.lat = lat;
-        params.lon = lon;
-    }
-    // Sinon on cherche par ville (Cartes de la Roadmap)
-    else if (originalCity) {
-        params.q = cityMapping[originalCity] || originalCity;
-    } else {
-        return { error: 'Paramètres manquants' };
-    }
+    if (lat && lon) { params.lat = lat; params.lon = lon; }
+    else if (originalCity) { params.q = cityMapping[originalCity] || originalCity; }
+    else { return { error: 'Paramètres manquants' }; }
 
     try {
-        return await $fetch(`https://api.openweathermap.org/data/2.5/weather`, { params });
+        // On lance les deux requêtes en parallèle pour aller plus vite
+        const [currentReq, forecastReq] = await Promise.all([
+            $fetch(`https://api.openweathermap.org/data/2.5/weather`, { params }),
+            $fetch(`https://api.openweathermap.org/data/2.5/forecast`, { params })
+        ]);
+
+        // On renvoie la météo actuelle + les 8 prochaines prévisions (soit les prochaines 24h)
+        return {
+            current: currentReq,
+            forecast: (forecastReq as any).list.slice(0, 8)
+        };
     } catch (error: any) {
         console.error(`☁️ Météo introuvable`);
         return { error: 'Météo introuvable' };

@@ -1,111 +1,143 @@
 <template>
-  <div class="min-h-[100dvh] bg-surface flex flex-col p-6 pt-12 pb-12 relative overflow-hidden">
+  <div class="min-h-[100dvh] flex flex-col relative overflow-hidden text-white bg-gradient-to-b from-[#2d4a22] to-[#0f1f12]">
 
-    <div class="absolute top-[5%] left-[50%] -translate-x-1/2 w-[600px] h-[300px] bg-secondary-container rounded-[100%] mix-blend-multiply filter blur-[100px] opacity-30 -z-10"></div>
+    <div class="relative w-full h-[50vh] flex-none">
 
-    <header class="flex items-center justify-between mb-10 relative z-10">
-      <NuxtLink to="/" class="w-12 h-12 bg-surface-bright rounded-full flex items-center justify-center shadow-sm border border-outline-variant/30 hover:-translate-y-1 transition-transform">
-        <svg class="w-6 h-6 text-on-surface" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
-        </svg>
+      <img
+          src="/bg-landscape.jpg"
+          alt="Paysage"
+          class="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000"
+          :class="isNight ? 'opacity-40' : 'opacity-100'"
+      />
+
+      <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#2d4a22] to-transparent"></div>
+      <div v-if="isNight" class="absolute inset-0 bg-slate-900/60 transition-colors duration-1000"></div>
+
+      <div class="absolute inset-0 pointer-events-none z-10">
+        <WeatherBackground :displayWeather="displayWeather" :isNight="isNight" />
+      </div>
+
+      <NuxtLink to="/" class="absolute top-12 left-6 z-50 w-12 h-12 bg-white/20 backdrop-blur-xl border border-white/30 rounded-full flex items-center justify-center hover:bg-white/30 transition-all shadow-lg active:scale-95 cursor-pointer">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
       </NuxtLink>
-      <h1 class="font-headline text-xl font-black uppercase tracking-widest text-on-surface-variant">Conditions Live</h1>
-      <div class="w-12"></div>
-    </header>
 
-    <main v-if="weather" class="flex-1 space-y-6 relative z-10">
-
-      <section class="bg-surface-bright/80 backdrop-blur-xl p-8 rounded-[3rem] shadow-surf border border-white/40 text-center">
-        <p class="text-xs font-black text-primary uppercase tracking-[0.3em] mb-2">{{ weather.name }}</p>
-        <div class="relative inline-block">
-          <span class="font-headline text-8xl font-black text-on-surface tracking-tighter">
-            {{ Math.round(weather.main.temp) }}°
-          </span>
-          <span class="absolute -top-2 -right-6 text-4xl">
-             {{ weather.main.temp > 20 ? '☀️' : '☁️' }}
-          </span>
+      <div v-if="weather" class="relative z-20 flex flex-col items-center justify-center h-full pt-6 animate-slide-down pointer-events-none">
+        <h1 class="text-sm font-black tracking-[0.2em] drop-shadow-md uppercase">{{ weather.current.name }}</h1>
+        <div class="text-[7rem] font-headline font-black leading-none drop-shadow-xl tracking-tighter my-1">
+          {{ Math.round(weather.current.main.temp) }}°
         </div>
-        <p class="text-lg font-medium text-on-surface-variant capitalize mt-2 italic">
-          "{{ weather.weather[0].description }}"
+        <p class="text-xl font-bold capitalize tracking-wide drop-shadow-md">
+          {{ weather.current.weather[0].description }}
         </p>
+        <div class="flex gap-4 mt-2 text-sm font-bold drop-shadow-md">
+          <span>H: {{ Math.round(weather.current.main.temp_max) }}°</span>
+          <span>L: {{ Math.round(weather.current.main.temp_min) }}°</span>
+        </div>
+      </div>
+    </div>
+
+    <main v-if="weather" class="flex-1 -mt-8 bg-white/10 backdrop-blur-2xl rounded-t-[2.5rem] border-t border-white/20 shadow-[0_-20px_50px_rgba(0,0,0,0.25)] p-6 pt-8 relative z-30 flex flex-col gap-8 overflow-y-auto animate-slide-up text-white">
+
+      <div class="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-white/40 rounded-full"></div>
+
+      <section class="mt-2">
+        <h2 class="text-[11px] font-black text-white/80 uppercase tracking-[0.2em] mb-4 drop-shadow-sm">Prévisions (3h)</h2>
+        <div class="flex overflow-x-auto gap-3 pb-2 hide-scrollbar snap-x">
+          <div
+              v-for="(item, index) in weather.forecast"
+              :key="index"
+              class="snap-start flex-none w-[4.5rem] py-4 flex flex-col items-center gap-3 rounded-[1.5rem] border transition-transform hover:scale-105"
+              :class="index === 0 ? 'bg-white/40 border-white/60 shadow-lg' : 'bg-black/20 backdrop-blur-md border-white/10 shadow-sm'"
+          >
+            <span class="text-xs font-bold opacity-90">{{ index === 0 ? 'Mnt' : formatHour(item.dt) }}</span>
+            <span class="text-2xl drop-shadow-sm">{{ getWeatherEmoji(item.weather[0].icon) }}</span>
+            <span class="text-base font-black">{{ Math.round(item.main.temp) }}°</span>
+          </div>
+        </div>
       </section>
 
       <div class="grid grid-cols-2 gap-4">
-        <div class="bg-primary-container/40 p-5 rounded-[2rem] border border-primary/10">
-          <span class="text-[10px] font-bold text-on-primary-fixed-variant uppercase tracking-widest block mb-1">💨 Vent</span>
-          <span class="text-xl font-black text-on-primary-container">{{ Math.round(weather.wind.speed * 3.6) }} km/h</span>
+        <div class="bg-black/20 backdrop-blur-md p-5 rounded-[2rem] border border-white/10 flex flex-col gap-1 shadow-inner">
+          <span class="text-[10px] font-bold text-white/70 uppercase tracking-widest flex items-center gap-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            Vent
+          </span>
+          <span class="text-2xl font-black drop-shadow-sm">{{ Math.round(weather.current.wind.speed * 3.6) }} <span class="text-sm font-medium opacity-70">km/h</span></span>
         </div>
-        <div class="bg-tertiary-container/30 p-5 rounded-[2rem] border border-tertiary/10">
-          <span class="text-[10px] font-bold text-on-tertiary-fixed-variant uppercase tracking-widest block mb-1">💧 Humidité</span>
-          <span class="text-xl font-black text-on-tertiary-container">{{ weather.main.humidity }}%</span>
+        <div class="bg-black/20 backdrop-blur-md p-5 rounded-[2rem] border border-white/10 flex flex-col gap-1 shadow-inner">
+          <span class="text-[10px] font-bold text-white/70 uppercase tracking-widest flex items-center gap-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7H3"></path></svg>
+            Humidité
+          </span>
+          <span class="text-2xl font-black drop-shadow-sm">{{ weather.current.main.humidity }}<span class="text-sm font-medium opacity-70">%</span></span>
         </div>
       </div>
 
-      <section class="bg-inverse-surface text-inverse-on-surface p-6 rounded-[2.5rem] shadow-lg">
-        <h3 class="font-headline font-bold text-sm uppercase tracking-wider mb-4 flex items-center gap-2 text-primary-container">
-          ✨ Captain's Briefing
-        </h3>
-        <ul class="space-y-4">
-          <li class="flex items-start gap-3">
-            <span class="text-xl">{{ weather.wind.speed * 3.6 < 20 ? '🚁' : '⚠️' }}</span>
-            <p class="text-sm font-medium leading-snug">
-              {{ weather.wind.speed * 3.6 < 20 ? 'Conditions idéales pour une session drone.' : 'Vent fort : évite de sortir le drone maintenant.' }}
-            </p>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="text-xl">{{ weather.main.temp < 12 ? '🔥' : '🚐' }}</span>
-            <p class="text-sm font-medium leading-snug">
-              {{ weather.main.temp < 12 ? 'Il va faire frais : pense à vérifier le niveau de diesel pour le chauffage.' : 'Température douce : la nuit dans le van sera parfaite.' }}
-            </p>
-          </li>
-        </ul>
-      </section>
-
     </main>
 
-    <div v-else class="flex-1 flex flex-col items-center justify-center space-y-4">
-      <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-      <p class="font-bold text-on-surface-variant animate-pulse">Récupération des satellites...</p>
+    <div v-else class="flex-1 flex flex-col items-center justify-center space-y-4 text-white z-20">
+      <div class="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
+      <p class="font-bold tracking-widest uppercase text-xs animate-pulse opacity-70">Scan du ciel...</p>
     </div>
+
+    <button @click="cycleDebugWeather" class="fixed bottom-6 right-6 z-50 bg-black/40 backdrop-blur-md p-3 rounded-full text-[10px] font-bold uppercase text-white shadow-lg opacity-50 hover:opacity-100 transition-opacity">
+      Test: {{ debugWeatherState || 'Auto' }}
+    </button>
 
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-
-/**
- * Detailed weather page for the roadtrip.
- * Uses the custom server API to fetch data based on current geolocation.
- */
+import { ref, onMounted, computed } from 'vue';
 
 const weather = ref<any>(null);
 
+// Debug System
+const debugStates = [null, 'Clear', 'Clouds', 'Rain'];
+const debugIndex = ref(0);
+const debugWeatherState = computed(() => debugStates[debugIndex.value]);
+const cycleDebugWeather = () => { debugIndex.value = (debugIndex.value + 1) % debugStates.length; };
+
+const formatHour = (timestamp: number) => {
+  return new Date(timestamp * 1000).toLocaleTimeString('fr-FR', { hour: '2-digit' }) + 'h';
+};
+
+const isNight = computed(() => {
+  if (!weather.value) return false;
+  const current = weather.value.current.dt;
+  return current < weather.value.current.sys.sunrise || current > weather.value.current.sys.sunset;
+});
+
+const displayWeather = computed(() => {
+  if (debugWeatherState.value) return debugWeatherState.value;
+  if (!weather.value || weather.value.error) return null;
+  const main = weather.value.current.weather[0].main;
+  return ['Rain', 'Drizzle', 'Thunderstorm'].includes(main) ? 'Rain' : main;
+});
+
+const getWeatherEmoji = (iconCode: string) => {
+  const map: Record<string, string> = {
+    '01d': '☀️', '01n': '✨', '02d': '⛅', '02n': '☁️', '03d': '☁️', '03n': '☁️',
+    '04d': '☁️', '04n': '☁️', '09d': '🌧️', '09n': '🌧️', '10d': '🌦️', '10n': '🌧️',
+    '11d': '⛈️', '11n': '⛈️', '13d': '❄️', '13n': '❄️', '50d': '🌫️', '50n': '🌫️',
+  };
+  return map[iconCode] || '☁️';
+};
+
 onMounted(() => {
   if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const { latitude, longitude } = position.coords;
-      try {
-        // Fetching from our secure server route
-        weather.value = await $fetch('/api/weather', {
-          params: { lat: latitude, lon: longitude }
-        });
-      } catch (err) {
-        console.error("Failed to fetch weather details", err);
-      }
+    navigator.geolocation.getCurrentPosition(async (p) => {
+      weather.value = await $fetch('/api/weather', { params: { lat: p.coords.latitude, lon: p.coords.longitude } });
     });
   }
 });
 </script>
 
 <style scoped>
-/* Smooth fade-in for the main sections */
-main > * {
-  animation: slide-up 0.6s ease-out forwards;
-}
-
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.animate-slide-down { animation: slideDown 0.8s ease-out forwards; }
+.animate-slide-up { animation: slideUp 0.6s ease-out forwards; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
 </style>
