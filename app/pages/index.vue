@@ -61,6 +61,7 @@
       <NuxtLink to="/roadmap" class="bg-primary-container text-on-primary-container p-6 rounded-3xl shadow-sm hover:-translate-y-1 transition-transform flex flex-col items-center gap-2">
         <span class="font-bold">Roadmap 🗺️</span>
       </NuxtLink>
+
       <NuxtLink to="/packing" class="bg-surface-bright text-on-surface border border-surface-dim/30 p-6 rounded-3xl shadow-sm hover:-translate-y-1 transition-transform flex flex-col items-center gap-2">
         <span class="font-bold">Checklist 📋</span>
       </NuxtLink>
@@ -74,6 +75,30 @@
         <span class="text-xl">📌</span>
         <span class="font-bold uppercase tracking-wider text-sm">Mur de Souvenirs</span>
       </NuxtLink>
+
+      <NuxtLink
+          v-if="isWrappedUnlocked"
+          to="/wrapped"
+          class="col-span-2 bg-[#0a0a0a] text-white p-5 rounded-3xl shadow-xl hover:-translate-y-1 transition-all flex items-center justify-between group overflow-hidden relative mt-2 border border-white/20 animate-in zoom-in duration-500"
+      >
+        <div class="absolute inset-0 bg-gradient-to-r from-secondary/20 via-primary/20 to-quaternary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
+        <div class="flex items-center gap-4 relative z-10">
+          <span class="text-3xl">🎸</span>
+          <div class="flex flex-col text-left">
+            <span class="font-headline font-black uppercase tracking-tighter text-lg">Roadtrip Wrapped</span>
+            <span class="text-[10px] font-bold uppercase opacity-80">
+              Votre année en van
+            </span>
+          </div>
+        </div>
+
+        <div class="relative z-10">
+          <svg class="w-6 h-6 text-primary transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+          </svg>
+        </div>
+      </NuxtLink>
     </nav>
   </div>
 </template>
@@ -81,24 +106,32 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 
+const { $pb } = useNuxtApp();
+
 const TRIP_START_DATE = new Date('2026-05-19T08:00:00').getTime();
 const TRIP_END_DATE = new Date('2026-05-31T20:00:00').getTime();
 
 const currentTime = ref<number>(new Date().getTime());
 const localWeather = ref<any>(null);
 
+// Fetch all trips_days to dynamically calculate the end of the trip
+const { data: tripDays } = await useAsyncData('tripsDays', () => $pb.collection('trips_days').getFullList());
+
+// Weather display logic
 const displayWeather = computed(() => {
   if (!localWeather.value || localWeather.value.error || !localWeather.value.current) return null;
   const main = localWeather.value.current.weather[0].main;
   return ['Rain', 'Drizzle', 'Thunderstorm'].includes(main) ? 'Rain' : main;
 });
 
+// Main trip state management
 const tripStatus = computed(() => {
   if (currentTime.value < TRIP_START_DATE) return 'upcoming';
   if (currentTime.value <= TRIP_END_DATE) return 'ongoing';
   return 'finished';
 });
 
+// Countdown logic for upcoming trip
 const countdown = computed(() => {
   const diff = TRIP_START_DATE - currentTime.value;
   if (diff < 0) return { days: 0, hours: 0, minutes: 0 };
@@ -109,14 +142,33 @@ const countdown = computed(() => {
   };
 });
 
+// Secret Wrapped Logic: Unlocks at exactly 15:00 on the last day of the trip
+const isWrappedUnlocked = computed(() => {
+  if (!tripDays.value || tripDays.value.length === 0) return false;
+
+  // Find the last day based on day_number
+  const lastDay = [...tripDays.value].sort((a, b) => b.day_number - a.day_number)[0];
+
+  if (!lastDay.date) return false;
+
+  // Create a Date object for the last day and set the time to 15:00:00
+  const unlockDate = new Date(lastDay.date);
+  unlockDate.setHours(15, 0, 0, 0);
+
+  return currentTime.value >= unlockDate.getTime();
+});
+
 onMounted(() => {
+  // Update time every minute to trigger the Wrapped button automatically
   setInterval(() => { currentTime.value = new Date().getTime(); }, 60000);
+
+  // Fetch local weather based on user location
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(async (p) => {
-      localWeather.value = await $fetch('/api/weather', { params: { lat: p.coords.latitude, lon: p.coords.longitude } });
+      localWeather.value = await $fetch('/api/weather', {
+        params: { lat: p.coords.latitude, lon: p.coords.longitude }
+      });
     });
   }
 });
 </script>
-
-
