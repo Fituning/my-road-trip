@@ -7,11 +7,9 @@
           <path d="M 0 1 L 10 5 L 0 9 z" class="text-on-surface-variant/20" fill="currentColor" />
         </marker>
       </defs>
-
       <path class="text-tertiary-container" fill="currentColor" d="M -10 150 Q 10 120 30 155 T 60 165 T 90 140 T 120 150 L 120 -10 L -10 -10 Z" />
       <path class="text-secondary-container" fill="currentColor" d="M -10 110 Q 10 140 35 110 T 65 95 T 95 115 T 120 100 L 120 -10 L -10 -10 Z" />
       <path class="text-primary-container" fill="currentColor" d="M -10 60 Q 15 30 45 55 T 75 70 T 105 45 T 130 60 L 120 -10 L -10 -10 Z" />
-
       <path class="text-on-surface-variant/10" fill="none" stroke="currentColor" stroke-width="0.5" stroke-dasharray="2 4" marker-mid="url(#tri-dir)" d="M -10 150 Q 10 120 30 155 T 60 165 T 90 140 T 120 150" />
       <path class="text-on-surface-variant/10" fill="none" stroke="currentColor" stroke-width="0.5" stroke-dasharray="2 4" marker-mid="url(#tri-dir)" d="M -10 110 Q 10 140 35 110 T 65 95 T 95 115 T 120 100" />
       <path class="text-on-surface-variant/10" fill="none" stroke="currentColor" stroke-width="0.5" stroke-dasharray="2 4" marker-mid="url(#tri-dir)" d="M -10 60 Q 15 30 45 55 T 75 70 T 105 45 T 130 60" />
@@ -28,7 +26,8 @@
     </header>
 
     <div class="flex-1 flex overflow-x-auto snap-x snap-mandatory hide-scrollbar px-[12.5vw] gap-[25vw] pb-10 items-center relative z-10">
-      <div v-if="status === 'pending'" class="w-full text-center font-bold text-on-surface-variant animate-pulse">
+
+      <div v-if="status === 'pending' && (!tripDays || tripDays.length === 0)" class="w-full text-center font-bold text-on-surface-variant animate-pulse">
         Calcul de la route... 🚐
       </div>
 
@@ -46,11 +45,6 @@
 </template>
 
 <script setup lang="ts">
-/**
- * Page: Roadmap
- * Handles the horizontal scroll of daily trip steps.
- */
-
 const { $pb } = useNuxtApp();
 
 const { data: tripDays, status, refresh: refreshData } = await useAsyncData('tripsDays', async () => {

@@ -59,11 +59,17 @@
 
     <nav class="w-full max-w-md grid grid-cols-2 gap-4 relative z-10">
       <NuxtLink to="/roadmap" class="bg-primary-container text-on-primary-container p-6 rounded-3xl shadow-sm hover:-translate-y-1 transition-transform flex flex-col items-center gap-2">
-        <span class="font-bold">Roadmap</span>
+        <span class="font-bold">Roadmap 🗺️</span>
       </NuxtLink>
       <NuxtLink to="/packing" class="bg-surface-bright text-on-surface border border-surface-dim/30 p-6 rounded-3xl shadow-sm hover:-translate-y-1 transition-transform flex flex-col items-center gap-2">
-        <span class="font-bold">Checklist</span>
+        <span class="font-bold">Checklist 📋</span>
       </NuxtLink>
+
+      <NuxtLink to="/map" class="col-span-2 bg-quaternary text-white p-5 rounded-3xl shadow-md hover:-translate-y-1 transition-transform flex items-center justify-center gap-3">
+        <span class="text-xl">🚐</span>
+        <span class="font-bold uppercase tracking-wider text-sm">Suivre le Van (Live Map)</span>
+      </NuxtLink>
+
       <NuxtLink to="/memories" class="col-span-2 bg-[#cda87c] text-on-surface-variant p-5 rounded-3xl shadow-md hover:-translate-y-1 transition-transform flex items-center justify-center gap-3">
         <span class="text-xl">📌</span>
         <span class="font-bold uppercase tracking-wider text-sm">Mur de Souvenirs</span>
