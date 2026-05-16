@@ -24,7 +24,13 @@
           </h2>
           <span class="text-[10px] font-bold opacity-80 uppercase tracking-tighter">{{ day.date }}</span>
         </div>
-        <WeatherWidget :city="day.arrival_city" class="scale-100 origin-top-right shrink-0 drop-shadow-lg" />
+        <WeatherWidget
+            :city="day.arrival_city"
+            :lat="day.lat"
+            :lng="day.lng"
+            :date="day.date"
+            class="scale-100 origin-top-right shrink-0 drop-shadow-lg"
+        />
       </div>
 
       <nav class="flex p-1 bg-black/10 rounded-2xl mb-4 shrink-0 shadow-inner border border-white/5">

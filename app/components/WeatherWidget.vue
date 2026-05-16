@@ -11,7 +11,7 @@
     </template>
 
     <template v-else>
-      <div v-if="city" class="flex flex-col items-center">
+      <div v-if="city || (lat && lng)" class="flex flex-col items-center">
         <div class="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
         <span class="text-[8px] font-black text-white/60 uppercase tracking-widest mt-2">Loading</span>
       </div>
@@ -27,53 +27,58 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 
-/**
- * WeatherWidget Component
- * Displays a minimal weather summary with a glassmorphism effect.
- */
-
+// On ajoute la date dans les props !
 const props = defineProps<{
   city?: string;
+  lat?: number;
+  lng?: number;
+  date?: string;
 }>();
 
 const weather = ref<any>(null);
 
-/**
- * Maps OpenWeather API icons to high-quality emojis
- */
 const getWeatherEmoji = (iconCode: string): string => {
   const map: Record<string, string> = {
-    '01d': '☀️', '01n': '✨',
-    '02d': '⛅', '02n': '☁️',
-    '03d': '☁️', '03n': '☁️',
-    '04d': '☁️', '04n': '☁️',
-    '09d': '🌧️', '09n': '🌧️',
-    '10d': '🌦️', '10n': '🌧️',
-    '11d': '⛈️', '11n': '⛈️',
-    '13d': '❄️', '13n': '❄️',
+    '01d': '☀️', '01n': '✨', '02d': '⛅', '02n': '☁️',
+    '03d': '☁️', '03n': '☁️', '04d': '☁️', '04n': '☁️',
+    '09d': '🌧️', '09n': '🌧️', '10d': '🌦️', '10n': '🌧️',
+    '11d': '⛈️', '11n': '⛈️', '13d': '❄️', '13n': '❄️',
     '50d': '🌫️', '50n': '🌫️',
   };
   return map[iconCode] || '☁️';
 };
 
 onMounted(async () => {
-  if (props.city) {
-    try {
-      // Securely fetch weather from our internal API
-      weather.value = await $fetch('/api/weather', { params: { city: props.city } });
-    } catch (e) {
-      console.error(`[WeatherWidget] Failed to fetch data for ${props.city}`, e);
+  try {
+    // Construction dynamique des paramètres pour l'API
+    const queryParams: Record<string, any> = {};
+
+    if (props.lat !== undefined && props.lng !== undefined && props.lat !== null && props.lng !== null) {
+      queryParams.lat = props.lat;
+      queryParams.lon = props.lng;
+    } else if (props.city) {
+      queryParams.city = props.city;
     }
+
+    // Si on a une date, on l'ajoute à la requête
+    if (props.date) {
+      queryParams.date = props.date;
+    }
+
+    // On lance l'appel uniquement si on a au moins des coordonnées ou une ville
+    if (Object.keys(queryParams).length > 0) {
+      weather.value = await $fetch('/api/weather', { params: queryParams });
+    }
+  } catch (e) {
+    console.error(`[WeatherWidget] Failed to fetch data`, e);
   }
 });
 </script>
 
 <style scoped>
-/* Smooth entry for the emoji */
 .animate-slide-in {
   animation: slideIn 0.5s ease-out forwards;
 }
-
 @keyframes slideIn {
   from { opacity: 0; transform: scale(0.5); }
   to { opacity: 1; transform: scale(1); }
