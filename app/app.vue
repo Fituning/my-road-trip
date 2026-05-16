@@ -5,7 +5,7 @@
     <div class="absolute top-[20%] right-[-5%] w-64 h-64 bg-tertiary-container rounded-full mix-blend-multiply filter blur-[60px] opacity-60"></div>
     <div class="absolute bottom-[20%] left-[-5%] w-72 h-72 bg-quaternary-container rounded-full mix-blend-multiply filter blur-[70px] opacity-50"></div>
 
-    <main v-if="!isUnlocked" class="relative z-10 flex flex-col items-center justify-center min-h-[100dvh] p-6">
+    <main v-if="!isUnlocked && !isPublicRoute" class="relative z-10 flex flex-col items-center justify-center min-h-[100dvh] p-6">
 
       <div class="relative w-full flex flex-col items-center mb-10">
         <svg class="absolute -top-8 -z-10 w-24 h-24 text-tertiary opacity-40 animate-[spin_30s_linear_infinite]" viewBox="0 0 100 100" fill="currentColor">
@@ -34,9 +34,7 @@
         <button v-for="digit in 9" :key="digit" @click="appendDigit(digit)"
                 class="w-16 h-16 flex items-center justify-center text-2xl font-headline font-bold shadow-sm hover:shadow-md hover:-translate-y-1 active:scale-90 transition-all mx-auto"
                 :class="[
-                  /* Alternating organic blob shapes */
                   digit % 2 === 0 ? 'rounded-[50%_50%_40%_60%/60%_40%_50%_50%]' : 'rounded-[40%_60%_50%_50%/50%_50%_60%_40%]',
-                  /* Spreading the pastel colors across the keypad */
                   digit === 5 ? 'bg-tertiary-container text-on-tertiary-container' :
                   digit === 2 || digit === 6 ? 'bg-secondary-container text-on-secondary-container' :
                   digit === 8 ? 'bg-quaternary-container text-on-quaternary-container' :
@@ -78,22 +76,27 @@
 </template>
 
 <script setup lang="ts">
-/**
- * Component: App Root (Cute Love Gate)
- * Description: Lock screen with organic shapes, playful interactions, and persistent session validation.
- */
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useRoute } from 'nuxt/app';
+
+// 1. Détection de la route actuelle
+const route = useRoute();
+
+// 2. On définit quelles pages sont publiques (bypass du cadenas)
+const isPublicRoute = computed(() => {
+  return route.path === '/map';
+});
 
 const currentPin = ref<string>('');
 const hasError = ref<boolean>(false);
 
-// 1. Initialisation du cookie avec une expiration explicite (30 jours)
+// 3. Initialisation du cookie avec expiration de 30 jours
 const authCookie = useCookie<string | null>('auth_unlocked', {
-  maxAge: 60 * 60 * 24, // 30 jours en secondes
+  maxAge: 30, // 60 * 60 * 24
   path: '/'
 });
 
-// 2. L'état se base directement sur la présence du cookie
+// L'état de verrouillage
 const isUnlocked = ref<boolean>(authCookie.value === 'true');
 
 const appendDigit = (digit: number): void => {
@@ -118,7 +121,7 @@ const submitPin = async (): Promise<void> => {
     });
 
     if (!error.value) {
-      // 3. LA LIGNE MAGIQUE : On force l'enregistrement du cookie côté navigateur
+      // Déverrouillage OK, on sauve le cookie
       authCookie.value = 'true';
       isUnlocked.value = true;
     } else {
