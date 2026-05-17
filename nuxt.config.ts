@@ -6,6 +6,11 @@ export default defineNuxtConfig({
 
     css: ['./app/assets/css/main.css'],
 
+    // 1. Add the PWA module
+    modules: [
+        '@vite-pwa/nuxt'
+    ],
+
     vite: {
         plugins: [
             tailwindcss(),
@@ -21,7 +26,7 @@ export default defineNuxtConfig({
     },
 
     runtimeConfig: {
-        // Privé (Serveur)
+        // Private (Server)
         pocketbaseInternalUrl: process.env.POCKETBASE_INTERNAL_URL,
         openweatherApiKey: process.env.NUXT_OPENWEATHER_API_KEY,
         public: {
@@ -30,7 +35,6 @@ export default defineNuxtConfig({
         }
     },
 
-    // Configuration App & PWA
     app: {
         head: {
             title: 'Roadtrip 2026',
@@ -44,6 +48,49 @@ export default defineNuxtConfig({
             link: [
                 { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }
             ]
+        }
+    },
+
+    // 2. Configure the PWA module
+    pwa: {
+        registerType: 'autoUpdate',
+        manifest: {
+            name: 'My Roadtrip',
+            short_name: 'Roadtrip',
+            description: 'Notre carnet de voyage en van',
+            theme_color: '#030303',
+            background_color: '#030303',
+            display: 'standalone', // Makes it look like a native app (hides browser UI)
+            orientation: 'portrait',
+            // Dans la section pwa.manifest.icons :
+            icons: [
+                {
+                    src: 'favicon.svg',
+                    sizes: 'any',
+                    type: 'image/svg+xml',
+                    purpose: 'any'
+                },
+                {
+                    src: 'pwa-192x192.png',
+                    sizes: '192x192',
+                    type: 'image/png'
+                },
+                {
+                    src: 'pwa-512x512.png',
+                    sizes: '512x512',
+                    type: 'image/png',
+                    purpose: 'any maskable'
+                }
+            ]
+        },
+        workbox: {
+            // Setup offline caching for the core files
+            navigateFallback: '/',
+            globPatterns: ['**/*.{js,css,html,png,svg,ico}']
+        },
+        devOptions: {
+            enabled: true, // Enables PWA features in dev mode for testing
+            type: 'module'
         }
     }
 });

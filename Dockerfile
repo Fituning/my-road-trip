@@ -1,22 +1,35 @@
-# 1. Base image with Node.js (Slim version for smaller footprint)
-FROM node:20-slim AS base
+# Stage 1: Build the Nuxt application
+FROM node:20-alpine AS builder
+
 WORKDIR /app
 
-# 2. Copy package files first to leverage Docker layer caching
+# Copy dependency definitions first to leverage Docker layer caching
 COPY package*.json ./
 
-# 3. Install dependencies
-RUN npm install
+# Use 'npm ci' for a clean, deterministic, and faster installation
+RUN npm ci
 
-# 4. Copy the rest of the application code
+# Copy the rest of the source code and build the project
 COPY . .
+RUN npm run build
 
-# 5. Define runtime environment variables
-ENV PORT=3000
-ENV HOST=0.0.0.0
+# Stage 2: Setup the production runner
+# Alpine is used to keep the final image size to an absolute minimum
+FROM node:20-alpine AS runner
 
-# 6. Expose the port Nuxt will run on
+WORKDIR /app
+
+# Copy only the compiled output from the builder stage
+# Nuxt's Nitro engine bundles everything needed inside this standalone folder
+COPY --from=builder /app/.output ./.output
+
+# Define strict environment variables for production
+ENV NODE_ENV=production
+ENV NITRO_HOST=0.0.0.0
+ENV NITRO_PORT=3000
+
+# Expose the internal port Nuxt will listen on
 EXPOSE 3000
 
-# 7. Default command for development (can be overridden in docker-compose)
-CMD ["npm", "run", "dev"]
+# Start the optimized Nitro standalone server
+CMD ["node", ".output/server/index.mjs"]

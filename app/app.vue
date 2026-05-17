@@ -68,10 +68,11 @@
         Oops, c'est pas le bon code ! 🙈
       </div>
     </main>
-
     <div v-else class="relative z-10 h-[100dvh] overflow-y-auto overflow-x-hidden">
       <NuxtPage />
+      <VitePwaManifest />
     </div>
+
   </div>
 </template>
 
@@ -92,7 +93,7 @@ const hasError = ref<boolean>(false);
 
 // 3. Initialisation du cookie avec expiration de 30 jours
 const authCookie = useCookie<string | null>('auth_unlocked', {
-  maxAge: 30, // 60 * 60 * 24
+  maxAge: 60 * 60 * 24, // 60 * 60 * 24
   path: '/'
 });
 

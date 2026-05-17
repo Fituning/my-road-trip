@@ -2,60 +2,47 @@ version: '3.8'
 
 services:
   # ==========================================
-  # DATABASE SERVICE: PocketBase
+  # DATABASE: PocketBase
   # ==========================================
-  pocketbase:
+  roadtrip-db:
     image: ghcr.io/muchobien/pocketbase:latest
-    container_name: roadtrip-pocketbase
-    restart: unless-stopped
-    ports:
-      - "8091:8090"
+    container_name: roadtrip-db
+    restart: always
     volumes:
-      # Data persistence for SQLite DB and uploaded files (photos)
       - ./pb_data:/pb_data
       - ./pb_public:/pb_public
+    # Pas de ports ici, on passe par le réseau proxy interne !
     networks:
-      - roadtrip-net
+      - default
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8090/api/health" ]
-      interval: 5s
+      test: [ "CMD", "wget", "--spider", "-q", "http://127.0.0.1:8090/api/health" ]
+      interval: 10s
       timeout: 5s
       retries: 3
 
   # ==========================================
-  # FRONTEND SERVICE: Nuxt 3 App
+  # FRONTEND: Nuxt 3 App PWA
   # ==========================================
-  nuxt-app:
+  roadtrip:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: roadtrip-nuxt
-    restart: unless-stopped
-    volumes:
-      # Map local source code to container for Hot Module Replacement (HMR)
-      - .:/app
-      # Anonymous volumes to prevent local conflicts with container structure
-      - /app/node_modules
-      - /app/.nuxt
+      dockerfile: Dockerfile # Assure-toi qu'il build pour la prod !
+    container_name: roadtrip
+    restart: always
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - HOST=0.0.0.0
-      # Vite polling specific for Docker volumes
-      - CHOKIDAR_USEPOLLING=true
-      # API URLs for client and server side rendering
-      - NUXT_PUBLIC_POCKETBASE_URL=http://127.0.0.1:8091
-      - POCKETBASE_INTERNAL_URL=http://pocketbase:8090
-    # Auto-install packages on startup before launching Nuxt dev server
-    command: sh -c "npm install && npm run dev"
-    ports:
-      - "3001:3000"     # Main Nuxt server port (Host:Container)
-      - "24679:24678"   # Vite HMR WebSocket port to avoid conflict
+      # URL Client (Publique) : Ce que le navigateur utilise via Cloudflare
+      - NUXT_PUBLIC_POCKETBASE_URL=https://roadtrip-db.azth.org
+      # URL Serveur (Interne) : Nuxt parle directement à la BDD via le réseau Docker
+      - POCKETBASE_INTERNAL_URL=http://roadtrip-db:8090
     networks:
-      - roadtrip-net
+      - default
     depends_on:
-      pocketbase:
+      roadtrip-db:
         condition: service_healthy
 
 networks:
-  roadtrip-net:
-    driver: bridge
+  default:
+    external:
+      name: proxy_network
