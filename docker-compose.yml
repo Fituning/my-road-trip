@@ -11,7 +11,6 @@ services:
     volumes:
       - ./pb_data:/pb_data
       - ./pb_public:/pb_public
-    # Pas de ports ici, on passe par le réseau proxy interne !
     networks:
       - default
     healthcheck:
@@ -26,16 +25,17 @@ services:
   roadtrip:
     build:
       context: .
-      dockerfile: Dockerfile # Assure-toi qu'il build pour la prod !
+      dockerfile: Dockerfile
     container_name: roadtrip
     restart: always
     environment:
       - NODE_ENV=production
       - HOST=0.0.0.0
-      # URL Client (Publique) : Ce que le navigateur utilise via Cloudflare
-      - NUXT_PUBLIC_POCKETBASE_URL=https://roadtrip-db.azth.org
-      # URL Serveur (Interne) : Nuxt parle directement à la BDD via le réseau Docker
-      - POCKETBASE_INTERNAL_URL=http://roadtrip-db:8090
+      # Docker va mapper automatiquement avec ton fichier .env local 🪄
+      - NUXT_APP_PIN_CODE=${NUXT_APP_PIN_CODE}
+      - NUXT_PUBLIC_POCKETBASE_URL=${NUXT_PUBLIC_POCKETBASE_URL}
+      - POCKETBASE_INTERNAL_URL=${POCKETBASE_INTERNAL_URL}
+      - NUXT_OPENWEATHER_API_KEY=${NUXT_OPENWEATHER_API_KEY}
     networks:
       - default
     depends_on:
