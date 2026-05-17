@@ -34,11 +34,14 @@
                   v-model="newItemCategory"
                   class="w-full p-3.5 pr-10 bg-surface-container-low rounded-xl text-sm border border-surface-dim/20 focus:outline-none focus:border-primary appearance-none transition-colors"
               >
-                <option value="Van">🚐 Van Life</option>
+                <option value="Van">🚐 Van</option>
                 <option value="Tech">💻 Tech</option>
-                <option value="Samy">🐱 Samy</option>
-                <option value="Food">🍝 Nourriture</option>
-                <option value="Clothes">👕 Vêtements</option>
+                <option value="Vêtements">👕 Vêtements</option>
+                <option value="Soins">🪥 Soins</option>
+                <option value="Activité">🏄‍♂️ Activité</option>
+                <option value="Rando">🥾 Rando</option>
+                <option value="Admin">🗂️ Admin</option>
+                <option value="Autre">📦 Autre</option>
               </select>
               <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-on-surface-variant">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,7 +162,6 @@ const newItemName = ref('');
 const newItemCategory = ref('Van');
 const isAdding = ref(false);
 
-// Utilisation de useAsyncData avec refresh pour garder la synchro
 const { data: packingItems, status, refresh } = await useAsyncData('packingList', async () => {
   try {
     const records = await $pb.collection('packing_list').getFullList<PackingItem>({
@@ -197,7 +199,7 @@ const addItem = async () => {
       is_done: false
     });
     newItemName.value = '';
-    await refresh(); // Force le rechargement pour voir l'item direct
+    await refresh();
   } catch (err) {
     console.error("Error adding item:", err);
   } finally {
@@ -208,39 +210,41 @@ const addItem = async () => {
 const deleteItem = async (id: string) => {
   try {
     await $pb.collection('packing_list').delete(id);
-    await refresh(); // Force le rechargement après suppression
+    await refresh();
   } catch (err) {
     console.error("Error deleting item:", err);
   }
 };
 
-/**
- * TOGGLE ITEM (CORRIGÉ)
- * On attend la réponse de PocketBase puis on force un refresh total des data Nuxt.
- */
 const toggleItem = async (item: PackingItem) => {
   try {
-    // 1. On update en base
     await $pb.collection('packing_list').update(item.id, {
       is_done: !item.is_done
     });
-    // 2. LA LIGNE MAGIQUE : On force Nuxt à refaire le fetch
-    // Ça va trigger le computed groupedItems et la barre de progression
     await refresh();
   } catch (err) {
     console.error("Error toggling item:", err);
   }
 };
 
+// C'est ici que la magie opère ! 🪄
 const formatCategory = (cat: string) => {
   const icons: Record<string, string> = {
     tech: '💻 Tech',
-    van: '🚐 Van Life',
-    samy: '🐱 Samy',
-    food: '🍝 Food',
-    clothes: '👕 Habits'
+    van: '🚐 Van',
+    vêtements: '👕 Vêtements',
+    soins: '🪥 Soins',
+    activité: '🏄‍♂️ Activité',
+    rando: '🥾 Rando',
+    admin: '🗂️ Admin',
+    autre: '📦 Autre'
   };
-  return icons[cat.toLowerCase()] || cat;
+
+  // On met la catégorie en minuscule pour matcher le dico
+  const lowerCat = cat.toLowerCase();
+
+  // Si la catégorie est connue, on renvoie l'icône, sinon on met le fallback générique
+  return icons[lowerCat] || `🏷️ ${cat}`;
 };
 </script>
 

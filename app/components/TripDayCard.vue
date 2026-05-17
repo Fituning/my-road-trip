@@ -1,7 +1,7 @@
 <template>
   <article
       :class="cardTheme.bg"
-      class="flex-none w-[85vw] max-w-[340px] h-[72dvh] snap-center rounded-[3.5rem] shadow-2xl border border-white/20 flex flex-col relative overflow-hidden group transition-all duration-500"
+      class="flex-none w-[85vw] max-w-[340px] h-[80dvh] snap-center rounded-[3.5rem] shadow-2xl border border-white/20 flex flex-col relative overflow-hidden group transition-all duration-500"
   >
     <button @click="openDrawer" class="absolute top-6 right-6 z-20 w-11 h-11 bg-white/20 backdrop-blur-lg border border-white/30 rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 active:scale-95 transition-transform">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
@@ -12,9 +12,9 @@
       <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
     </div>
 
-    <div class="px-6 pb-6 flex-1 flex flex-col relative z-10 -mt-8 text-white">
+    <div class="px-6 pb-6 flex-1 flex flex-col relative z-10 -mt-8 text-white min-h-0">
 
-      <div class="mb-4 flex justify-between items-start">
+      <div class="mb-4 flex justify-between items-start shrink-0">
         <div>
           <div class="inline-block px-4 py-1 bg-white/20 rounded-full text-[10px] font-black tracking-widest mb-2 uppercase border border-white/20 backdrop-blur-md">
             Day {{ day.day_number }}
@@ -22,7 +22,13 @@
           <h2 class="font-headline text-3xl font-black leading-tight drop-shadow-md line-clamp-2">
             {{ day.arrival_city }}
           </h2>
-          <span class="text-[10px] font-bold opacity-80 uppercase tracking-tighter">{{ day.date }}</span>
+
+          <div class="flex items-center gap-2 mt-1.5">
+            <span class="text-xs font-black uppercase tracking-widest drop-shadow-sm">{{ day.date }}</span>
+            <span v-if="cleanTravelTime" class="text-[10px] font-bold opacity-90 uppercase tracking-widest px-2 py-0.5 bg-black/20 rounded-full border border-white/10 flex items-center gap-1">
+              🚐 {{ cleanTravelTime }}
+            </span>
+          </div>
         </div>
         <WeatherWidget
             :city="day.arrival_city"
@@ -44,9 +50,9 @@
         </button>
       </nav>
 
-      <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col">
+      <div class="flex-1 overflow-y-auto hide-scrollbar pb-2">
 
-        <div v-show="activeTab === 'info'" class="flex flex-col h-full animate-fade-in">
+        <div v-show="activeTab === 'info'" class="flex flex-col min-h-full animate-fade-in">
           <div class="mb-5">
             <h3 class="text-[10px] font-black text-white/60 uppercase tracking-widest mb-3">📍 Route Plan</h3>
             <ul class="space-y-2">
@@ -72,7 +78,7 @@
           </div>
         </div>
 
-        <div v-show="activeTab === 'links'" class="flex flex-col h-full animate-fade-in">
+        <div v-show="activeTab === 'links'" class="flex flex-col min-h-full animate-fade-in">
           <h3 class="text-[10px] font-black text-white/60 uppercase tracking-widest mb-3">🔗 Ressources du jour</h3>
 
           <div v-if="parsedLinks.length > 0" class="flex flex-col gap-2.5">
@@ -91,13 +97,13 @@
             </a>
           </div>
 
-          <div v-else class="flex-1 flex flex-col items-center justify-center opacity-50">
+          <div v-else class="flex-1 flex flex-col items-center justify-center opacity-50 py-10">
             <span class="text-3xl mb-2">🏜️</span>
             <span class="text-[10px] font-black uppercase tracking-widest text-center">Aucun lien ajouté<br>pour le moment</span>
           </div>
         </div>
 
-        <div v-show="activeTab === 'notes'" class="flex flex-col h-full animate-fade-in">
+        <div v-show="activeTab === 'notes'" class="flex flex-col min-h-full animate-fade-in">
           <div class="flex justify-between items-center mb-2">
             <h3 class="text-[10px] font-black text-white/60 uppercase tracking-widest">📝 Log Book</h3>
             <span v-if="isUpdatingNote" class="text-[8px] font-black text-white animate-pulse uppercase">Saving...</span>
@@ -106,7 +112,7 @@
               v-model="localNote"
               @blur="saveNote"
               placeholder="Cher journal, aujourd'hui..."
-              class="flex-1 w-full bg-black/10 text-white text-sm p-4 rounded-2xl border border-white/10 focus:bg-black/20 outline-none resize-none hide-scrollbar placeholder:text-white/30"
+              class="flex-1 w-full min-h-[150px] bg-black/10 text-white text-sm p-4 rounded-2xl border border-white/10 focus:bg-black/20 outline-none resize-none hide-scrollbar placeholder:text-white/30"
           ></textarea>
         </div>
 
@@ -148,7 +154,7 @@
         </div>
 
         <div class="mt-2 border-t border-slate-100 pt-4">
-          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-2 block">Liens Utiles (JSON)</label>
+          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-2 block">Liens Utiles</label>
 
           <div class="space-y-2 mb-3">
             <div v-for="(lk, i) in editLinks" :key="i" class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-100">
@@ -204,6 +210,7 @@ const cardTheme = computed(() => {
 const localNote = ref(props.day.personal_notes || '');
 const isDrawerOpen = ref(false);
 const isUpdatingFull = ref(false);
+const isUpdatingNote = ref(false);
 const editForm = ref({ ...props.day });
 
 // --- GESTION DES LIENS JSON ---
@@ -233,8 +240,13 @@ const removeLink = (idx: number) => {
 };
 // ------------------------------
 
+// Nettoyage du travel_time pour virer le "(depuis ...)"
+const cleanTravelTime = computed(() => {
+  if (!props.day.travel_time) return null;
+  return props.day.travel_time.split('(')[0].trim();
+});
+
 const parseLocationInput = async (input: string) => {
-  // Même logique d'extraction magique que tout à l'heure
   if (!input) return null;
   if (input.includes('maps.google.com') || input.includes('google.com/maps')) {
     const coordRegex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
@@ -254,13 +266,20 @@ const parseLocationInput = async (input: string) => {
 
 const saveNote = async () => {
   if (localNote.value === props.day.personal_notes) return;
-  try { await $pb.collection('trips_days').update(props.day.id, { personal_notes: localNote.value }); emit('refresh'); } catch (err) { console.error(err); }
+  isUpdatingNote.value = true;
+  try {
+    await $pb.collection('trips_days').update(props.day.id, { personal_notes: localNote.value });
+    emit('refresh');
+  } catch (err) {
+    console.error(err);
+  } finally {
+    isUpdatingNote.value = false;
+  }
 };
 
 const openDrawer = () => {
   editForm.value = { ...props.day, booking_status: props.day.booking_status || 'pending' };
 
-  // On pré-charge les liens dans le state de modification
   let linksArray = [];
   if (props.day.useful_links) {
     if (Array.isArray(props.day.useful_links)) linksArray = [...props.day.useful_links];
@@ -284,12 +303,11 @@ const saveFullEdit = async () => {
       }
     }
 
-    // On injecte le tableau de liens mis à jour dans le payload pour PocketBase
     editForm.value.useful_links = editLinks.value;
 
     await $pb.collection('trips_days').update(props.day.id, editForm.value);
     closeDrawer();
-    emit('refresh'); // Le scroll ne bougera plus grâce au fix dans roadmap.vue !
+    emit('refresh');
   } catch (err) {
     console.error(err);
   } finally {
