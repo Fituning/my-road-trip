@@ -1,12 +1,12 @@
 <template>
   <div class="w-16 h-20 flex flex-col items-center justify-center bg-white/20 backdrop-blur-lg rounded-[1.5rem] border border-white/30 shadow-lg transition-all duration-500">
 
-    <template v-if="weather && weather.current">
+    <template v-if="weather && weather.trend">
       <span class="text-3xl drop-shadow-md mb-1 animate-slide-in">
-        {{ getWeatherEmoji(weather.current.weather[0].icon) }}
+        {{ getWeatherEmoji(weather.trend.icon) }}
       </span>
       <span class="font-headline font-black text-lg text-white leading-none tracking-tighter">
-        {{ Math.round(weather.current.main.temp) }}°
+        {{ Math.round(weather.trend.temp) }}°
       </span>
     </template>
 
@@ -27,7 +27,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 
-// On ajoute la date dans les props !
 const props = defineProps<{
   city?: string;
   lat?: number;
@@ -45,12 +44,11 @@ const getWeatherEmoji = (iconCode: string): string => {
     '11d': '⛈️', '11n': '⛈️', '13d': '❄️', '13n': '❄️',
     '50d': '🌫️', '50n': '🌫️',
   };
-  return map[iconCode] || '☁️';
+  return map[iconCode] || '⛅'; // Petit fallback sécurisé
 };
 
 onMounted(async () => {
   try {
-    // Construction dynamique des paramètres pour l'API
     const queryParams: Record<string, any> = {};
 
     if (props.lat !== undefined && props.lng !== undefined && props.lat !== null && props.lng !== null) {
@@ -60,12 +58,10 @@ onMounted(async () => {
       queryParams.city = props.city;
     }
 
-    // Si on a une date, on l'ajoute à la requête
     if (props.date) {
       queryParams.date = props.date;
     }
 
-    // On lance l'appel uniquement si on a au moins des coordonnées ou une ville
     if (Object.keys(queryParams).length > 0) {
       weather.value = await $fetch('/api/weather', { params: queryParams });
     }
