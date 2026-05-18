@@ -63,7 +63,8 @@ onMounted(async () => {
     }
 
     if (Object.keys(queryParams).length > 0) {
-      weather.value = await $fetch('/api/weather', { params: queryParams });
+      // 🚨 C'est ici que la magie opère pour pointer vers la nouvelle API
+      weather.value = await $fetch('/api/weather-trend', { params: queryParams });
     }
   } catch (e) {
     console.error(`[WeatherWidget] Failed to fetch data`, e);
